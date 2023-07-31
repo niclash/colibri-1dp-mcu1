@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="colibri-1dp-mcu1.elf" type="com.jetbrains.cidr.embedded.customgdbserver.type" factoryName="com.jetbrains.cidr.embedded.customgdbserver.factory" nameIsGenerated="true" PROGRAM_PARAMS="-l 65535 --verbose -p 17147 -cp $USER_HOME$/applications/stm32cubeide_1.12.1/plugins/com.st.stm32cube.ide.mcu.externaltools.cubeprogrammer.linux64_2.0.600.202301161003/tools/bin/ --frequency 8000 --swd" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="colibri-1dp-mcu1" TARGET_NAME="colibri-1dp-mcu1.elf" CONFIG_NAME="Debug" version="1" RUN_TARGET_PROJECT_NAME="colibri-1dp-mcu1" RUN_TARGET_NAME="colibri-1dp-mcu1.elf">
+    <custom-gdb-server version="1" gdb-connect="tcp::17147" executable="$USER_HOME$/applications/stm32cubeide_1.12.1/plugins/com.st.stm32cube.ide.mcu.externaltools.stlink-gdb-server.linux64_2.0.500.202301161003/tools/bin/ST-LINK_gdbserver" warmup-ms="0" download-type="UPDATED_ONLY" reset-cmd="monitor reset" reset-type="AFTER_DOWNLOAD">
+      <debugger kind="GDB" isBundled="true" />
+    </custom-gdb-server>
+    <method v="2">
+      <option name="CLION.COMPOUND.BUILD" enabled="true" />
+    </method>
+  </configuration>
+</component>

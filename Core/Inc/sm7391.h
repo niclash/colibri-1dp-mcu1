@@ -1,7 +1,3 @@
-//
-// Created by niclas on 2023-07-30.
-//
-
 #ifndef _SM7391_H
 #define _SM7391_H
 

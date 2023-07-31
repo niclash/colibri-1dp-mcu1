@@ -346,6 +346,7 @@ const osThreadAttr_t Thd_LmHandlerProcess_attr =
 static void Thd_LmHandlerProcess(void *argument);
 
 /* USER CODE BEGIN PV */
+static LmHandlerAppData_t appData;
 /* USER CODE END PV */
 
 /* Exported functions ---------------------------------------------------------*/
@@ -499,8 +500,6 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
   /* USER CODE BEGIN OnRxData_1 */
   /* USER CODE END OnRxData_1 */
 }
-
-static LmHandlerAppData_t appData;
 
 static void SendTxData(void)
 {
