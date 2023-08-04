@@ -24,7 +24,7 @@ set(CMAKE_C_STANDARD 11)
 #add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
 
 #Uncomment for software floating point
-#add_compile_options(-mfloat-abi=soft)
+add_compile_options(-mfloat-abi=soft)
 
 add_compile_options(-mcpu=cortex-m4 -mthumb -mthumb-interwork)
 add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
@@ -34,6 +34,7 @@ add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-le
 
 # Enable assembler files preprocessing
 add_compile_options($<$<COMPILE_LANGUAGE:ASM>:-x$<SEMICOLON>assembler-with-cpp>)
+add_compile_options($<$<PATH:HAS_STEM,mecrisp.s>:-Wa,-acdlns>)
 
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     message(STATUS "Maximum optimization for speed")
@@ -49,7 +50,7 @@ else ()
     add_compile_options(-Og -g)
 endif ()
 
-include_directories(Core/Inc LoRaWAN/App LoRaWAN/Target Utilities/trace/adv_trace Drivers/STM32WLxx_HAL_Driver/Inc Drivers/STM32WLxx_HAL_Driver/Inc/Legacy Utilities/misc Utilities/timer Utilities/lpm/tiny_lpm Middlewares/Third_Party/FreeRTOS/Source/include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3 Middlewares/Third_Party/LoRaWAN/LmHandler/Packages Drivers/CMSIS/Device/ST/STM32WLxx/Include Middlewares/Third_Party/LoRaWAN/Crypto Middlewares/Third_Party/LoRaWAN/Mac/Region Middlewares/Third_Party/LoRaWAN/Mac Middlewares/Third_Party/LoRaWAN/LmHandler Middlewares/Third_Party/LoRaWAN/Utilities Middlewares/Third_Party/SubGHz_Phy Middlewares/Third_Party/SubGHz_Phy/stm32_radio_driver Drivers/CMSIS/Include Core/ThreadSafe)
+include_directories(Core/Inc LoRaWAN/App LoRaWAN/Target Utilities/trace/adv_trace Drivers/STM32WLxx_HAL_Driver/Inc Drivers/STM32WLxx_HAL_Driver/Inc/Legacy Utilities/misc Utilities/timer Utilities/lpm/tiny_lpm Middlewares/Third_Party/FreeRTOS/Source/include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM3 Middlewares/Third_Party/LoRaWAN/LmHandler/Packages Drivers/CMSIS/Device/ST/STM32WLxx/Include Middlewares/Third_Party/LoRaWAN/Crypto Middlewares/Third_Party/LoRaWAN/Mac/Region Middlewares/Third_Party/LoRaWAN/Mac Middlewares/Third_Party/LoRaWAN/LmHandler Middlewares/Third_Party/LoRaWAN/Utilities Middlewares/Third_Party/SubGHz_Phy Middlewares/Third_Party/SubGHz_Phy/stm32_radio_driver Drivers/CMSIS/Include Core/ThreadSafe forth/common forth/cube)
 
 add_definitions(-DDEBUG -DCORE_CM4 -DUSE_HAL_DRIVER -DSTM32WLE5xx -DSTM32_THREAD_SAFE_STRATEGY=5)
 
@@ -71,3 +72,4 @@ add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}.elf> ${BIN_FILE}
         COMMENT "Building ${HEX_FILE}
 Building ${BIN_FILE}")
+

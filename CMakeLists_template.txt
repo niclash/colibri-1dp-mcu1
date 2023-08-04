@@ -23,7 +23,7 @@ set(CMAKE_C_STANDARD 11)
 #add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
 
 #Uncomment for software floating point
-#add_compile_options(-mfloat-abi=soft)
+add_compile_options(-mfloat-abi=soft)
 
 add_compile_options(-mcpu=${mcpu} -mthumb -mthumb-interwork)
 add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
@@ -33,6 +33,7 @@ add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-le
 
 # Enable assembler files preprocessing
 add_compile_options($<$<COMPILE_LANGUAGE:ASM>:-x$<SEMICOLON>assembler-with-cpp>)
+add_compile_options($<$<PATH:HAS_STEM,mecrisp.s>:-Wa,-acdlns>)
 
 if ("$${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     message(STATUS "Maximum optimization for speed")
@@ -48,7 +49,7 @@ else ()
     add_compile_options(-Og -g)
 endif ()
 
-include_directories(${includes})
+include_directories(${includes} forth/common forth/cube)
 
 add_definitions(${defines})
 
@@ -70,3 +71,4 @@ add_custom_command(TARGET $${PROJECT_NAME}.elf POST_BUILD
         COMMAND $${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:$${PROJECT_NAME}.elf> $${BIN_FILE}
         COMMENT "Building $${HEX_FILE}
 Building $${BIN_FILE}")
+

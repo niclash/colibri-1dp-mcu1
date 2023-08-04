@@ -22,7 +22,7 @@
 #include "usart_if.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "uart.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -203,13 +203,13 @@ void vcom_Resume(void)
   /*to re-enable lost UART settings*/
   if (HAL_UART_Init(&huart2) != HAL_OK)
   {
-    Error_Handler();
+    UART_ErrorCallback(&huart2);
   }
 
   /*to re-enable lost DMA settings*/
   if (HAL_DMA_Init(&hdma_usart2_tx) != HAL_OK)
   {
-    Error_Handler();
+    UART_ErrorCallback(&huart2);
   }
   /* USER CODE BEGIN vcom_Resume_2 */
 
@@ -227,7 +227,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
     TxCpltCallback(NULL);
   }
   /* USER CODE BEGIN HAL_UART_TxCpltCallback_2 */
-
+    UART_TxCpltCallback(huart);
   /* USER CODE END HAL_UART_TxCpltCallback_2 */
 }
 
@@ -245,7 +245,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
     HAL_UART_Receive_IT(huart, &charRx, 1);
   }
   /* USER CODE BEGIN HAL_UART_RxCpltCallback_2 */
-
+    UART_RxCpltCallback(huart);
   /* USER CODE END HAL_UART_RxCpltCallback_2 */
 }
 

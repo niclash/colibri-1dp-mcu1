@@ -70,6 +70,7 @@ void SystemClock_Config(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
+void Forth();
 
 /* USER CODE END PFP */
 
@@ -604,10 +605,7 @@ void StartDefaultTask(void *argument)
   MX_LoRaWAN_Init();
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+  Forth();
   /* USER CODE END 5 */
 }
 

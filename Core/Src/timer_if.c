@@ -26,7 +26,7 @@
 #include "stm32wlxx_ll_rtc.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "clock.h"
 /* USER CODE END Includes */
 
 /* External variables ---------------------------------------------------------*/
@@ -378,7 +378,7 @@ void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
   /* USER CODE END HAL_RTC_AlarmAEventCallback */
   UTIL_TIMER_IRQ_MAP_PROCESS();
   /* USER CODE BEGIN HAL_RTC_AlarmAEventCallback_Last */
-
+  RTC_AlarmAEventCallback();
   /* USER CODE END HAL_RTC_AlarmAEventCallback_Last */
 }
 
