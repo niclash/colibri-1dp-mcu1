@@ -32,24 +32,12 @@
  *      along with Mecrsip-Cube. If not, see http://www.gnu.org/licenses/.
  */
 
-// System include files
-// ********************
-#include "cmsis_os.h"
 #include <stdio.h>
-
-// Application include files
-// *************************
 #include <stdbool.h>
+#include "cmsis_os.h"
 #include "main.h"
 #include "uart.h"
 
-// Rx/Tx Buffer Length
-// *******************
-#define UART_TX_BUFFER_LENGTH	1024
-#define UART_RX_BUFFER_LENGTH	(5 * 1024)
-
-#define UART_CHAR_SENT		0x01
-#define UART_CHAR_RECEIVED	0x01
 
 // Private function prototypes
 // ***************************
@@ -67,7 +55,7 @@ extern UART_HandleTypeDef huart2;
 // **************
 
 // Definitions for UART Tx thread
-static osThreadId_t UART_TxThreadId;
+osThreadId_t UART_TxThreadId;
 static const osThreadAttr_t UART_TxThreadAttr = {
 		.name = "UART_Tx",
 		.priority = (osPriority_t) osPriorityHigh,
@@ -75,7 +63,7 @@ static const osThreadAttr_t UART_TxThreadAttr = {
 };
 
 // Definitions for UART Rx thread
-static osThreadId_t UART_RxThreadId;
+osThreadId_t UART_RxThreadId;
 static const osThreadAttr_t UART_RxThreadAttr = {
 		.name = "UART_Rx",
 		.priority = (osPriority_t) osPriorityHigh,
@@ -121,30 +109,34 @@ void UART_init(void) {
 	// creation of TxQueue
 	UART_TxQueueId = osMessageQueueNew(UART_TX_BUFFER_LENGTH, sizeof(uint8_t),
 			&uart_TxQueue_attributes);
-//	ASSERT_fatal(UART_TxQueueId != NULL, ASSERT_QUEUE_CREATION, __get_PC());
+	if( UART_TxQueueId == NULL ) {
+        Error_Handler();
+    }
 	// creation of RxQueue
 	UART_RxQueueId = osMessageQueueNew(UART_RX_BUFFER_LENGTH, sizeof(uint8_t),
 			&uart_RxQueue_attributes);
-//	ASSERT_fatal(UART_RxQueueId != NULL, ASSERT_QUEUE_CREATION, __get_PC());
+    if( UART_RxQueueId == NULL ) {
+        Error_Handler();
+    }
 
 	UART_MutexID = osMutexNew(&UART_MutexAttr);
-//	ASSERT_fatal(UART_MutexID != NULL, ASSERT_MUTEX_CREATION, __get_PC());
+    if( UART_MutexID == NULL ) {
+        Error_Handler();
+    }
 
 	// creation of UART_TxThread
 	UART_TxThreadId = osThreadNew(UART_TxThread, NULL, &UART_TxThreadAttr);
-//	ASSERT_fatal(UART_TxThreadId != NULL, ASSERT_THREAD_CREATION, __get_PC());
+    if( UART_TxThreadId == NULL ) {
+        Error_Handler();
+    }
 
 	// creation of UART_RxThread
 	UART_RxThreadId = osThreadNew(UART_RxThread, NULL, &UART_RxThreadAttr);
-//	ASSERT_fatal(UART_RxThreadId != NULL, ASSERT_THREAD_CREATION, __get_PC());
+    if( UART_RxThreadId == NULL ) {
+        Error_Handler();
+    }
 }
 
-/**
- *  @brief
- *      Resets the UART queues.
- *  @return
- *      None
- */
 void UART_reset(void) {
 	osMessageQueueReset(UART_RxQueueId);
 	osMessageQueueReset(UART_TxQueueId);
@@ -153,11 +145,9 @@ void UART_reset(void) {
 
 /**
  *  @brief
- *		Reads a char from the UART Rx (serial in). Blocking until char is
- *      ready.
+ *		Reads a char from the UART Rx (serial in). Blocking until char is ready.
  *  @return
- *      Return the character read as an unsigned char cast to an int or EOF on
- *      error.
+ *      Return the character read as an unsigned char cast to an int or EOF on error.
  */
 int UART_getc(void) {
 	uint8_t c;
@@ -185,10 +175,9 @@ int UART_getc(void) {
  *      Return 0 if successful, EOF on error
  */
 int UART_gets(char *str, int length) {
-	int i = 0;
 	uint8_t c;
 
-	for (i=0; i<length; i++) {
+	for (int i=0; i<length; i++) {
 		if (osMessageQueueGet(UART_RxQueueId, &c, NULL, osWaitForever) == osOK) {
 			str[i] = c;
 			if (c == '\r' || c == '\n') {
@@ -439,10 +428,6 @@ void UART_setStopBits(const int stopbits) {
 	osMutexRelease(UART_MutexID);
 }
 
-
-// Private Functions
-// *****************
-
 /**
   * @brief
   * 	Function implementing the UART Tx thread.
@@ -477,7 +462,6 @@ static void UART_TxThread(void *argument) {
 	}
 }
 
-
 /**
   * @brief
   * 	Function implementing the UART Rx thread.
@@ -501,7 +485,13 @@ static void UART_RxThread(void *argument) {
 	for(;;) {
 		// blocked till a character is received
 		status = osThreadFlagsWait(UART_CHAR_RECEIVED, osFlagsWaitAny, osWaitForever);
-//		ASSERT_nonfatal(UART_RxBuffer != 0x03, ASSERT_UART_SIGINT, 0); // ^C character abort
+        if( status < 0 ){
+            Error_Handler();
+        }
+        if( UART_RxBuffer != 0x03 ){ // ^C character abort
+            // TODO:
+        }
+
 		// put the received character into the queue
 		status = osMessageQueuePut(UART_RxQueueId, &UART_RxBuffer, 0, 100);
 		if (status != osOK) {
@@ -510,41 +500,13 @@ static void UART_RxThread(void *argument) {
 		}
 		// receive the next character
 		osMutexAcquire(UART_MutexID, osWaitForever);
-		status = HAL_UART_Receive_IT(&huart2, &UART_RxBuffer, 1);
+        HAL_StatusTypeDef status2 = HAL_UART_Receive_IT(&huart2, &UART_RxBuffer, 1);
 		osMutexRelease(UART_MutexID);
-		if (status != osOK) {
+		if (status2 != HAL_OK) {
 			// can't receive char
 			Error_Handler();
 		}
 	}
-}
-
-
-// Callbacks
-// *********
-
-/**
-  * @brief Tx Transfer completed callback.
-  * @param huart UART handle.
-  * @retval None
-  */
-void UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-	/* Prevent unused argument(s) compilation warning */
-	UNUSED(huart);
-
-	osThreadFlagsSet(UART_TxThreadId, UART_CHAR_SENT);
-}
-
-/**
-  * @brief  Rx Transfer completed callback.
-  * @param  huart UART handle.
-  * @retval None
-  */
-void UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	/* Prevent unused argument(s) compilation warning */
-	UNUSED(huart);
-
-	osThreadFlagsSet(UART_RxThreadId, UART_CHAR_RECEIVED);
 }
 
 /**
@@ -552,12 +514,10 @@ void UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   * @param  huart UART handle.
   * @retval None
   */
-void UART_ErrorCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 	/* Prevent unused argument(s) compilation warning */
 	UNUSED(huart);
     Error_Handler();
-
-//	ASSERT_nonfatal(0, ASSERT_UART_ERROR_CALLBACK, 0);
 }
 
 
@@ -569,7 +529,6 @@ void UART_ErrorCallback(UART_HandleTypeDef *huart) {
 void HAL_UARTEx_RxFifoFullCallback(UART_HandleTypeDef *huart) {
 	/* Prevent unused argument(s) compilation warning */
 	UNUSED(huart);
-
-//	ASSERT_nonfatal(0, ASSERT_UART_FIFO, 0);
+    Error_Handler();
 }
 

@@ -44,10 +44,10 @@ _Min_Stack_Size = 0x400; /* required amount of stack */
 /* Memories definition */
 MEMORY
 {
-  RAM    (xrw)   : ORIGIN = 0x20000000, LENGTH = 32K
-  RAM_FORTH (xrw)   : ORIGIN = 0x20008000, LENGTH = 32K
-  RAM2   (xrw)   : ORIGIN = 0x10000000, LENGTH = 32K
-  FLASH   (rx)   : ORIGIN = 0x08000000, LENGTH = 256K
+  RAM    (xrw)      : ORIGIN = 0x20000000, LENGTH = 64K
+  FLASH   (rx)      : ORIGIN = 0x08000000, LENGTH = 160K
+  FLASH_FORTH (rx)  : ORIGIN = 0x08028000, LENGTH = 92K
+  FLASH_NVM (rx)    : ORIGIN = 0x0803F000, LENGTH = 4K
 }
 
 /* Sections */
@@ -130,6 +130,14 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+ .fill :
+  {
+    FILL(0xFFFFFFFF);
+    . = ORIGIN(FLASH_FORTH) + LENGTH(FLASH_FORTH) - 1;
+    BYTE(0xFF)
+    ___ROM_AT = .;
+  } >FLASH_FORTH
+
   /* Used by the startup to initialize data */
   _sidata = LOADADDR(.data);
 
@@ -162,6 +170,18 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
+  } >RAM
+
+ .forth_ram :
+  {
+    . = ALIGN(8);
+    __Forth_RAM_start__ = .;
+    FILL(0x0);
+    . = (ORIGIN(RAM) + LENGTH(RAM) - 1) - (_Min_Heap_Size + _Min_Stack_Size);
+    BYTE(0x0);
+    . = ALIGN(8);
+    __Forth_RAM_end__ = .;
+    __Forth_RAM_size__ = __Forth_RAM_end__ - __Forth_RAM_start__;
   } >RAM
 
   /* User_heap_stack section, used to check that there is enough "RAM" Ram  type memory left */

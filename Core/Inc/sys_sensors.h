@@ -46,7 +46,6 @@ typedef struct
   int16_t altitudeBar;    /*!< in m * 10 */
   /**more may be added*/
   /* USER CODE BEGIN sensor_t */
-  float battery;         /*!< in degC */
 
   /* USER CODE END sensor_t */
 } sensor_t;

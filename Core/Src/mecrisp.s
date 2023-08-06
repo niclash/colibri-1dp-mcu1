@@ -94,21 +94,22 @@
 /*
 MEMORY
 {
-  RAM    (xrw)   : ORIGIN = 0x20000000, LENGTH = 32K
-  RAM_FORTH (xrw)   : ORIGIN = 0x20008000, LENGTH = 32K
-  RAM2   (xrw)   : ORIGIN = 0x10000000, LENGTH = 32K
-  FLASH   (rx)   : ORIGIN = 0x08000000, LENGTH = 256K
+  RAM    (xrw)      : ORIGIN = 0x20000000, LENGTH = 64K
+  FLASH   (rx)      : ORIGIN = 0x08000000, LENGTH = 160K
+  FLASH_FORTH (rx)  : ORIGIN = 0x08028000, LENGTH = 92K
+  FLASH_NVM (rx)    : ORIGIN = 0x0803F000, LENGTH = 4K
 }
 */
 
-.equ	RamAnfang,				0x20008000	@ Start of RAM
-.equ	RamEnde,				0x20010000	@ End   of RAM. (32 KiB RAM dictionary)
+.equ	RamAnfang,				__Forth_RAM_start__ @ Start of RAM  (Symbol from Linker LD file)
+.equ	RamEnde,				__Forth_RAM_end__   @ End   of RAM  (Symbol from Linker LD file)
+.equ    RamSize,				__Forth_RAM_size__  @ Size  of RAM for Forth  (Symbol from Linker LD file)
 
 @ Konstanten für die Größe und Aufteilung des Flash-Speichers
 
 .equ	Kernschutzadresse,		0x08030000	@ Mecrisp core never writes flash below this address.
-.equ	FlashDictionaryAnfang,	0x08030000	@ 160 KiB Flash reserved for core and C.
-.equ	FlashDictionaryEnde,	0x0803ffff	@ 64 KiB Flash available for Mecrisp dictionary
+.equ	FlashDictionaryAnfang,	0x08038000	@ 160 KiB Flash reserved for core and C.
+.equ	FlashDictionaryEnde,	0x0803F000	@ 92 KiB Flash available for Mecrisp dictionary
 .equ	Backlinkgrenze,			RamAnfang	@ Ab dem Ram-Start.
 
 
@@ -520,4 +521,3 @@ Forth:
 
 	@ Ready to fly !
 .include "boot.s"
-

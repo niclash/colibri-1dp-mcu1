@@ -34,9 +34,17 @@
 
 #ifndef INC_UART_H_
 #define INC_UART_H_
-#include "cmsis_os.h"
+
+// *******************
+// Rx/Tx Buffer Length
+#define UART_TX_BUFFER_LENGTH	1024
+#define UART_RX_BUFFER_LENGTH	(5 * 1024)
+#define UART_CHAR_SENT		0x01
+#define UART_CHAR_RECEIVED	0x01
 
 extern osMutexId_t UART_MutexID;
+extern osThreadId_t UART_TxThreadId;
+extern osThreadId_t UART_RxThreadId;
 
 void UART_init(void);
 int UART_getc(void);
@@ -50,9 +58,5 @@ void UART_setBaudrate(const int baudrate);
 void UART_setWordLength(const int wordlength);
 void UART_setParityBit(const int paritybit);
 void UART_setStopBits(const int stopbits);
-
-void UART_TxCpltCallback(UART_HandleTypeDef *huart);
-void UART_RxCpltCallback(UART_HandleTypeDef *huart);
-void UART_ErrorCallback(UART_HandleTypeDef *huart);
 
 #endif /* INC_UART_H_ */

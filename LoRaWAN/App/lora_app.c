@@ -504,50 +504,7 @@ static void OnRxData(LmHandlerAppData_t *appData, LmHandlerRxParams_t *params)
 static void SendTxData(void)
 {
   /* USER CODE BEGIN SendTxData_1 */
-    LmHandlerErrorStatus_t status = LORAMAC_HANDLER_ERROR;
-    uint8_t batteryLevel = GetBatteryLevel();
-    sensor_t sensor_data;
-    UTIL_TIMER_Time_t nextTxIn = 0;
 
-    if(LmHandlerIsBusy() == false)
-    {
-        uint8_t channel = 0;
-        EnvSensors_Read(&sensor_data);
-        APP_LOG(TS_ON, VLEVEL_M, "VDDA: %d\r\n", batteryLevel);
-        APP_LOG(TS_ON, VLEVEL_M, "temp: %d\r\n", (int16_t) (sensor_data.temperature));
-        appData.Port = LORAWAN_USER_APP_PORT;
-
-        CayenneLppReset();
-        CayenneLppAddBarometricPressure(channel++, sensor_data.pressure);
-        CayenneLppAddTemperature(channel++, sensor_data.temperature);
-        CayenneLppAddRelativeHumidity(channel++, (uint16_t) (sensor_data.humidity));
-        CayenneLppAddDigitalInput(channel++, batteryLevel);
-
-        CayenneLppCopy(appData.Buffer);
-        appData.BufferSize = CayenneLppGetSize();
-
-        status = LmHandlerSend(&appData, LmHandlerParams.IsTxConfirmed, false);
-        if(LORAMAC_HANDLER_SUCCESS == status)
-        {
-            APP_LOG(TS_ON, VLEVEL_L, "SEND REQUEST\r\n");
-        } else if(LORAMAC_HANDLER_DUTYCYCLE_RESTRICTED == status)
-        {
-            nextTxIn = LmHandlerGetDutyCycleWaitTime();
-            if(nextTxIn > 0)
-            {
-                APP_LOG(TS_ON, VLEVEL_L, "Next Tx in  : ~%d second(s)\r\n", (nextTxIn / 1000));
-            }
-        }
-    }
-
-    if(EventType == TX_ON_TIMER)
-    {
-        UTIL_TIMER_Stop(&TxTimer);
-        UTIL_TIMER_Time_t next = MAX(nextTxIn, TxPeriodicity);
-        UTIL_TIMER_SetPeriod(&TxTimer, next);
-        UTIL_TIMER_Start(&TxTimer);
-        APP_LOG(TS_ON, VLEVEL_M, "Next: %d\r\n", next);
-    }
   /* USER CODE END SendTxData_1 */
 }
 
@@ -745,7 +702,7 @@ static void StoreContext(void)
 static void OnNvmDataChange(LmHandlerNvmContextStates_t state)
 {
   /* USER CODE BEGIN OnNvmDataChange_1 */
-    HAL_GPIO_WritePin(AUX1_GPIO_Port, AUX1_Pin, GPIO_PIN_RESET);
+
   /* USER CODE END OnNvmDataChange_1 */
   if (state == LORAMAC_HANDLER_NVM_STORE)
   {
@@ -756,7 +713,7 @@ static void OnNvmDataChange(LmHandlerNvmContextStates_t state)
     APP_LOG(TS_OFF, VLEVEL_M, "NVM DATA RESTORED\r\n");
   }
   /* USER CODE BEGIN OnNvmDataChange_Last */
-    HAL_GPIO_WritePin(AUX1_GPIO_Port, AUX1_Pin, GPIO_PIN_SET);
+
   /* USER CODE END OnNvmDataChange_Last */
 }
 

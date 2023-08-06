@@ -23,10 +23,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "stdbool.h"
+#include "clock.h"
+#include "flash.h"
+#include "uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -52,14 +56,20 @@ SUBGHZ_HandleTypeDef hsubghz;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_tx;
 DMA_HandleTypeDef hdma_usart2_tx;
 
-/* Definitions for defaultTask */
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
+/* Definitions for forth */
+osThreadId_t forthHandle;
+uint32_t forthBuffer[ 512 ];
+osStaticThreadDef_t forthControlBlock;
+const osThreadAttr_t forth_attributes = {
+  .name = "forth",
+  .stack_mem = &forthBuffer[0],
+  .stack_size = sizeof(forthBuffer),
+  .cb_mem = &forthControlBlock,
+  .cb_size = sizeof(forthControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
 };
 /* USER CODE BEGIN PV */
 RTC_HandleTypeDef hrtc;
@@ -67,7 +77,7 @@ RTC_HandleTypeDef hrtc;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-void StartDefaultTask(void *argument);
+void RunForth(void *argument);
 
 /* USER CODE BEGIN PFP */
 void Forth();
@@ -109,7 +119,8 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_I2C2_Init();
-  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
+  UART_init();
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
@@ -133,8 +144,8 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  /* creation of forth */
+  forthHandle = osThreadNew(RunForth, NULL, &forth_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -412,11 +423,11 @@ void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 460800;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.Mode = UART_MODE_TX;
   huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart1.Init.OverSampling = UART_OVERSAMPLING_16;
   huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
@@ -503,6 +514,9 @@ void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Channel4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
   /* DMA1_Channel5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
@@ -592,20 +606,25 @@ void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_RunForth */
 /**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
+* @brief Function implementing the forth thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_RunForth */
+void RunForth(void *argument)
 {
   /* init code for LoRaWAN */
   MX_LoRaWAN_Init();
   /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  Forth();
+
+  RTC_init();
+  FLASH_init();
+
+  while(true) {
+    Forth();        // Forth contains an endless loop, but IF it happens to exit, we jump straight back into it.
+  }
   /* USER CODE END 5 */
 }
 

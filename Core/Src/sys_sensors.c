@@ -81,6 +81,12 @@
 /* Private define ------------------------------------------------------------*/
 
 /* USER CODE BEGIN PD */
+#define STSOP_LATTITUDE           ((float) 43.618622 )  /*!< default latitude position */
+#define STSOP_LONGITUDE           ((float) 7.051415  )  /*!< default longitude position */
+#define MAX_GPS_POS               ((int32_t) 8388607 )  /*!< 2^23 - 1 */
+#define HUMIDITY_DEFAULT_VAL      50.0f                 /*!< default humidity */
+#define TEMPERATURE_DEFAULT_VAL   18.0f                 /*!< default temperature */
+#define PRESSURE_DEFAULT_VAL      1000.0f               /*!< default pressure */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -116,9 +122,38 @@ IKS01A3_ENV_SENSOR_Capabilities_t EnvCapabilities;
 int32_t EnvSensors_Read(sensor_t *sensor_data)
 {
   /* USER CODE BEGIN EnvSensors_Read */
-  sensor_data->temperature = ((float) SYS_GetTemperatureLevel() / 256.0f);
-  sensor_data->battery = ((float)SYS_GetBatteryLevel() / 1000.0f);
-  sensor_data->pressure    = sm7391_read_sensor();
+  float HUMIDITY_Value = HUMIDITY_DEFAULT_VAL;
+  float TEMPERATURE_Value = TEMPERATURE_DEFAULT_VAL;
+  float PRESSURE_Value = PRESSURE_DEFAULT_VAL;
+
+#if defined (SENSOR_ENABLED) && (SENSOR_ENABLED == 1)
+#if (USE_IKS01A2_ENV_SENSOR_HTS221_0 == 1)
+  IKS01A2_ENV_SENSOR_GetValue(HTS221_0, ENV_HUMIDITY, &HUMIDITY_Value);
+  IKS01A2_ENV_SENSOR_GetValue(HTS221_0, ENV_TEMPERATURE, &TEMPERATURE_Value);
+#endif /* USE_IKS01A2_ENV_SENSOR_HTS221_0 */
+#if (USE_IKS01A2_ENV_SENSOR_LPS22HB_0 == 1)
+  IKS01A2_ENV_SENSOR_GetValue(LPS22HB_0, ENV_PRESSURE, &PRESSURE_Value);
+  IKS01A2_ENV_SENSOR_GetValue(LPS22HB_0, ENV_TEMPERATURE, &TEMPERATURE_Value);
+#endif /* USE_IKS01A2_ENV_SENSOR_LPS22HB_0 */
+#if (USE_IKS01A3_ENV_SENSOR_HTS221_0 == 1)
+  IKS01A3_ENV_SENSOR_GetValue(IKS01A3_HTS221_0, ENV_HUMIDITY, &HUMIDITY_Value);
+  IKS01A3_ENV_SENSOR_GetValue(IKS01A3_HTS221_0, ENV_TEMPERATURE, &TEMPERATURE_Value);
+#endif /* USE_IKS01A3_ENV_SENSOR_HTS221_0 */
+#if (USE_IKS01A3_ENV_SENSOR_LPS22HH_0 == 1)
+  IKS01A3_ENV_SENSOR_GetValue(IKS01A3_LPS22HH_0, ENV_PRESSURE, &PRESSURE_Value);
+  IKS01A3_ENV_SENSOR_GetValue(IKS01A3_LPS22HH_0, ENV_TEMPERATURE, &TEMPERATURE_Value);
+#endif /* USE_IKS01A3_ENV_SENSOR_LPS22HH_0 */
+#else
+  TEMPERATURE_Value = (SYS_GetTemperatureLevel() >> 8);
+#endif  /* SENSOR_ENABLED */
+
+  sensor_data->humidity    = HUMIDITY_Value;
+  sensor_data->temperature = TEMPERATURE_Value;
+  sensor_data->pressure    = PRESSURE_Value;
+
+  sensor_data->latitude  = (int32_t)((STSOP_LATTITUDE  * MAX_GPS_POS) / 90);
+  sensor_data->longitude = (int32_t)((STSOP_LONGITUDE  * MAX_GPS_POS) / 180);
+
   return 0;
   /* USER CODE END EnvSensors_Read */
 }
@@ -127,7 +162,120 @@ int32_t EnvSensors_Init(void)
 {
   int32_t ret = 0;
   /* USER CODE BEGIN EnvSensors_Init */
-  sm7391_init();
+#if defined (SENSOR_ENABLED) && (SENSOR_ENABLED == 1)
+  /* Init */
+#if (USE_IKS01A2_ENV_SENSOR_HTS221_0 == 1)
+  ret = IKS01A2_ENV_SENSOR_Init(HTS221_0, ENV_TEMPERATURE | ENV_HUMIDITY);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A2_ENV_SENSOR_HTS221_0 */
+#if (USE_IKS01A2_ENV_SENSOR_LPS22HB_0 == 1)
+  ret = IKS01A2_ENV_SENSOR_Init(LPS22HB_0, ENV_TEMPERATURE | ENV_PRESSURE);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A2_ENV_SENSOR_LPS22HB_0 */
+#if (USE_IKS01A3_ENV_SENSOR_HTS221_0 == 1)
+  ret = IKS01A3_ENV_SENSOR_Init(IKS01A3_HTS221_0, ENV_TEMPERATURE | ENV_HUMIDITY);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A3_ENV_SENSOR_HTS221_0 */
+#if (USE_IKS01A3_ENV_SENSOR_LPS22HH_0 == 1)
+  ret = IKS01A3_ENV_SENSOR_Init(IKS01A3_LPS22HH_0, ENV_TEMPERATURE | ENV_PRESSURE);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A3_ENV_SENSOR_LPS22HH_0 */
+
+  /* Enable */
+#if (USE_IKS01A2_ENV_SENSOR_HTS221_0 == 1)
+  ret = IKS01A2_ENV_SENSOR_Enable(HTS221_0, ENV_HUMIDITY);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+  ret = IKS01A2_ENV_SENSOR_Enable(HTS221_0, ENV_TEMPERATURE);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A2_ENV_SENSOR_HTS221_0 */
+#if (USE_IKS01A2_ENV_SENSOR_LPS22HB_0 == 1)
+  ret = IKS01A2_ENV_SENSOR_Enable(LPS22HB_0, ENV_PRESSURE);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+  ret = IKS01A2_ENV_SENSOR_Enable(LPS22HB_0, ENV_TEMPERATURE);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A2_ENV_SENSOR_LPS22HB_0 */
+#if (USE_IKS01A3_ENV_SENSOR_HTS221_0 == 1)
+  ret = IKS01A3_ENV_SENSOR_Enable(IKS01A3_HTS221_0, ENV_HUMIDITY);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+  ret = IKS01A3_ENV_SENSOR_Enable(IKS01A3_HTS221_0, ENV_TEMPERATURE);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A3_ENV_SENSOR_HTS221_0 */
+#if (USE_IKS01A3_ENV_SENSOR_LPS22HH_0 == 1)
+  ret = IKS01A3_ENV_SENSOR_Enable(IKS01A3_LPS22HH_0, ENV_PRESSURE);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+  ret = IKS01A3_ENV_SENSOR_Enable(IKS01A3_LPS22HH_0, ENV_TEMPERATURE);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A3_ENV_SENSOR_LPS22HH_0 */
+
+  /* Get capabilities */
+#if (USE_IKS01A2_ENV_SENSOR_HTS221_0 == 1)
+  ret = IKS01A2_ENV_SENSOR_GetCapabilities(HTS221_0, &EnvCapabilities);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A2_ENV_SENSOR_HTS221_0 */
+#if (USE_IKS01A2_ENV_SENSOR_LPS22HB_0 == 1)
+  ret = IKS01A2_ENV_SENSOR_GetCapabilities(LPS22HB_0, &EnvCapabilities);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A2_ENV_SENSOR_LPS22HB_0 */
+#if (USE_IKS01A3_ENV_SENSOR_HTS221_0 == 1)
+  ret = IKS01A3_ENV_SENSOR_GetCapabilities(IKS01A3_HTS221_0, &EnvCapabilities);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A3_ENV_SENSOR_HTS221_0 */
+#if (USE_IKS01A3_ENV_SENSOR_LPS22HH_0 == 1)
+  ret = IKS01A3_ENV_SENSOR_GetCapabilities(IKS01A3_LPS22HH_0, &EnvCapabilities);
+  if (ret != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+#endif /* USE_IKS01A3_ENV_SENSOR_LPS22HH_0 */
+
+#elif !defined (SENSOR_ENABLED)
+#error SENSOR_ENABLED not defined
+#endif /* SENSOR_ENABLED  */
   /* USER CODE END EnvSensors_Init */
   return ret;
 }
