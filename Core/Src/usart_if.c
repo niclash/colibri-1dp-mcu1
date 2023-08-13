@@ -20,7 +20,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usart_if.h"
-#include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */
 #include "uart.h"
@@ -231,7 +230,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
   /* USER CODE BEGIN HAL_UART_TxCpltCallback_2 */
     if (huart->Instance == USART2)
     {
-        osThreadFlagsSet(UART_TxThreadId, UART_CHAR_SENT);
+        UART_CharTransmittedInISR();
     }
 
   /* USER CODE END HAL_UART_TxCpltCallback_2 */
@@ -252,7 +251,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
   }
   /* USER CODE BEGIN HAL_UART_RxCpltCallback_2 */
   if (huart->Instance == USART2){
-    osThreadFlagsSet(UART_RxThreadId, UART_CHAR_RECEIVED);
+      UART_CharReceivedInISR();
   }
 
   /* USER CODE END HAL_UART_RxCpltCallback_2 */

@@ -515,8 +515,8 @@ Forth:
 //	beq		2f
 //	bl		uart_terminal		// button2 pressed on reset -> uart terminal
 2:
+	bl		cr
 	welcome " by Matthias Koch. "
-
 	bl		cr
 
 	@ Ready to fly !

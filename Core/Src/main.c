@@ -57,7 +57,6 @@ SUBGHZ_HandleTypeDef hsubghz;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_tx;
-DMA_HandleTypeDef hdma_usart2_tx;
 
 /* Definitions for forth */
 osThreadId_t forthHandle;
@@ -73,6 +72,12 @@ const osThreadAttr_t forth_attributes = {
 };
 /* USER CODE BEGIN PV */
 RTC_HandleTypeDef hrtc;
+
+float testing = 2.3f;
+float testing1 = 2.3f;
+int32_t testing2 = 0;
+bool testing3 = false;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -120,7 +125,6 @@ int main(void)
   MX_DMA_Init();
   MX_I2C2_Init();
   MX_USART2_UART_Init();
-  UART_init();
   /* USER CODE BEGIN 2 */
   /* USER CODE END 2 */
 
@@ -281,7 +285,7 @@ void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x00707CBB;
+  hi2c2.Init.Timing = 0x80000DA2;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -471,7 +475,7 @@ void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 460800;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -514,9 +518,6 @@ void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Channel4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
   /* DMA1_Channel5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel5_IRQn, 2, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel5_IRQn);
@@ -566,7 +567,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SPI_CS_A0_Pin SPI_CS_A1_Pin AUX1_Pin AUX2_Pin */
-  GPIO_InitStruct.Pin = SPI_CS_A0_Pin|SPI_CS_A1_Pin|AUX1_Pin|AUX2_Pin;
+  GPIO_InitStruct.Pin = SPI_CS_A0_Pin|SPI_CS_A1_Pin|AUX1_Pin|AUX2_Pin|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -574,8 +575,7 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : PA4 PA5 PA7 PA10
                            PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7|GPIO_PIN_10
-                          |GPIO_PIN_15;
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7|GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -621,6 +621,7 @@ void RunForth(void *argument)
 
   RTC_init();
   FLASH_init();
+  UART_init();
 
   while(true) {
     Forth();        // Forth contains an endless loop, but IF it happens to exit, we jump straight back into it.

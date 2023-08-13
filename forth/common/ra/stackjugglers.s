@@ -106,6 +106,7 @@ drop_allocator:
 
 @ -----------------------------------------------------------------------------
   Wortbirne Flag_foldable_2|Flag_inline|Flag_allocator, "swap" @ ( x y -- y x )
+swap:
 @ -----------------------------------------------------------------------------
   ldr r1,  [psp]  @ Load X from the stack, no SP change.
   str tos, [psp]  @ Replace it with TOS.

@@ -57,7 +57,8 @@ extern "C" {
 #define MW_LOG(TS,VL, ...)
 #endif /* MW_LOG_ENABLED */
 /* USER CODE BEGIN EM */
-
+#undef MW_LOG
+#define MW_LOG(TS,VL, ...)   do{  }while(0)
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

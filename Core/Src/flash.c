@@ -92,17 +92,11 @@ int FLASH_programDouble(uint32_t Address, uint32_t word1, uint32_t word2) {
 	if (HAL_FLASH_Unlock() == HAL_ERROR) {
 		Error_Handler();
 	}
-
-	return_value = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, Address, word1);
+    uint64_t data = ((uint64_t) word2 << 32) + ((uint64_t) word1);
+	return_value = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, Address, data);
 	if (return_value != HAL_OK) {
 		return_value = HAL_ERROR;
 		Error_Handler();
-	} else {
-		return_value = HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, Address+4, word2);
-		if (return_value != HAL_OK) {
-			return_value = HAL_ERROR;
-			Error_Handler();
-		}
 	}
 
 	if (HAL_FLASH_Lock() == HAL_ERROR) {

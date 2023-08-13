@@ -141,9 +141,9 @@ irq_vektor_\Name:
 @ -----------------------------------------------------------------------------
 
 // interrupts are handled by C routines (CubeMX)
-// interrupt systick
-// initinterrupt fault, faulthandler, unhandled
-// initinterrupt collection, nullhandler, unhandled
+@ interrupt systick
+@ initinterrupt fault, faulthandler, unhandled
+@ initinterrupt collection, nullhandler, unhandled
 
 @ -----------------------------------------------------------------------------
 @ Register map for reference purposes

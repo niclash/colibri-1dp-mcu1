@@ -80,8 +80,8 @@
 <xsl:text> @ hex. </xsl:text>
 <!-- <xsl:value-of select="$device"/><xsl:text>_</xsl:text><xsl:value-of select="name" />
 <xsl:text> </xsl:text> -->
-<xsl:value-of select="$device"/><xsl:text>-</xsl:text><xsl:value-of select="name" />
-<xsl:text> 1b. </xsl:text>
+<!--<xsl:value-of select="$device"/><xsl:text>-</xsl:text><xsl:value-of select="name" />-->
+<!--<xsl:text> 1b. </xsl:text>-->
 <!-- Register Print Words Finish -->
 
 
@@ -98,8 +98,9 @@
 <xsl:value-of select="$device"/><xsl:text>.
 </xsl:text>
 <xsl:for-each select="registers/register" >
-<xsl:value-of select="$device"/><xsl:text>-</xsl:text><xsl:value-of select="name" />
-<xsl:text>.
+  <xsl:text> cr </xsl:text>
+  <xsl:value-of select="$device"/><xsl:text>-</xsl:text><xsl:value-of select="name" />
+  <xsl:text>.
 </xsl:text>
 </xsl:for-each>
 <xsl:text>;

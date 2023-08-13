@@ -37,35 +37,16 @@
 #include "cmsis_os.h"
 #include "main.h"
 #include "uart.h"
+#include "queue.h"
 
-
-// Private function prototypes
-// ***************************
 static void UART_TxThread(void *argument);
-static void UART_RxThread(void *argument);
 
-// Global Variables
-// ****************
-
-// Hardware resources
-// ******************
 extern UART_HandleTypeDef huart2;
-
-// RTOS resources
-// **************
 
 // Definitions for UART Tx thread
 osThreadId_t UART_TxThreadId;
 static const osThreadAttr_t UART_TxThreadAttr = {
 		.name = "UART_Tx",
-		.priority = (osPriority_t) osPriorityHigh,
-		.stack_size = 512 * 2
-};
-
-// Definitions for UART Rx thread
-osThreadId_t UART_RxThreadId;
-static const osThreadAttr_t UART_RxThreadAttr = {
-		.name = "UART_Rx",
 		.priority = (osPriority_t) osPriorityHigh,
 		.stack_size = 512 * 2
 };
@@ -90,13 +71,17 @@ static const osMessageQueueAttr_t uart_RxQueue_attributes = {
 		.name = "UART_RxQueue"
 };
 
-// Private Variables
-// *****************
 static uint8_t UART_TxBuffer;
 static uint8_t UART_RxBuffer;
-
-// Public Functions
-// ****************
+static uint8_t xoffChar = 0x13;
+static uint8_t xonChar = 0x11;
+static bool xonIsOn = false;
+uint32_t xonCounter = 0;
+uint32_t xoffCounter = 0;
+uint32_t txCounter = 0;
+uint32_t rxCounter = 0;
+uint32_t xoffAt = 0;
+uint32_t xonAt = 0;
 
 /**
  *  @brief
@@ -107,14 +92,12 @@ static uint8_t UART_RxBuffer;
 void UART_init(void) {
 	// Create the queue(s)
 	// creation of TxQueue
-	UART_TxQueueId = osMessageQueueNew(UART_TX_BUFFER_LENGTH, sizeof(uint8_t),
-			&uart_TxQueue_attributes);
+	UART_TxQueueId = osMessageQueueNew(UART_TX_BUFFER_LENGTH, sizeof(uint8_t), &uart_TxQueue_attributes);
 	if( UART_TxQueueId == NULL ) {
         Error_Handler();
     }
 	// creation of RxQueue
-	UART_RxQueueId = osMessageQueueNew(UART_RX_BUFFER_LENGTH, sizeof(uint8_t),
-			&uart_RxQueue_attributes);
+	UART_RxQueueId = osMessageQueueNew(UART_RX_BUFFER_LENGTH, sizeof(uint8_t), &uart_RxQueue_attributes);
     if( UART_RxQueueId == NULL ) {
         Error_Handler();
     }
@@ -130,18 +113,14 @@ void UART_init(void) {
         Error_Handler();
     }
 
-	// creation of UART_RxThread
-	UART_RxThreadId = osThreadNew(UART_RxThread, NULL, &UART_RxThreadAttr);
-    if( UART_RxThreadId == NULL ) {
-        Error_Handler();
-    }
+    // Start receiving
+    HAL_UART_Receive_IT(&huart2, &UART_RxBuffer, 1);
 }
 
 void UART_reset(void) {
-	osMessageQueueReset(UART_RxQueueId);
-	osMessageQueueReset(UART_TxQueueId);
+    xQueueReset(UART_RxQueueId);
+    xQueueReset(UART_TxQueueId);
 }
-
 
 /**
  *  @brief
@@ -462,51 +441,34 @@ static void UART_TxThread(void *argument) {
 	}
 }
 
-/**
-  * @brief
-  * 	Function implementing the UART Rx thread.
-  * @param
-  * 	argument: Not used
-  * @retval
-  * 	None
-  */
-static void UART_RxThread(void *argument) {
-	osStatus_t status;
+void UART_CharTransmittedInISR()
+{
+    txCounter++;
+    osThreadFlagsSet(UART_TxThreadId, UART_CHAR_SENT);
+    BaseType_t hasHigherPriorityWoken = pdFALSE;
+    UBaseType_t queued = uxQueueMessagesWaitingFromISR(UART_RxQueueId);
+    if( xonIsOn && queued < 10 ) {
+        xonIsOn = false;
+        xoffCounter++;
+        xoffAt = txCounter;
+        xQueueSendToFrontFromISR(UART_TxQueueId, &xonChar, &hasHigherPriorityWoken);
+    }
+}
 
-	osMutexAcquire(UART_MutexID, osWaitForever);
-	// wait for the first Rx character
-	if (HAL_UART_Receive_IT(&huart2, &UART_RxBuffer, 1) != HAL_OK) {
-		// something went wrong
-		Error_Handler();
-	}
-	osMutexRelease(UART_MutexID);
-
-	// Infinite loop
-	for(;;) {
-		// blocked till a character is received
-		status = osThreadFlagsWait(UART_CHAR_RECEIVED, osFlagsWaitAny, osWaitForever);
-        if( status < 0 ){
-            Error_Handler();
-        }
-        if( UART_RxBuffer != 0x03 ){ // ^C character abort
-            // TODO:
-        }
-
-		// put the received character into the queue
-		status = osMessageQueuePut(UART_RxQueueId, &UART_RxBuffer, 0, 100);
-		if (status != osOK) {
-			// can't put char into queue
-			Error_Handler();
-		}
-		// receive the next character
-		osMutexAcquire(UART_MutexID, osWaitForever);
-        HAL_StatusTypeDef status2 = HAL_UART_Receive_IT(&huart2, &UART_RxBuffer, 1);
-		osMutexRelease(UART_MutexID);
-		if (status2 != HAL_OK) {
-			// can't receive char
-			Error_Handler();
-		}
-	}
+void UART_CharReceivedInISR()
+{
+    rxCounter++;
+    BaseType_t hasHigherPriorityWoken = pdFALSE;
+    UBaseType_t queued = uxQueueMessagesWaitingFromISR(UART_RxQueueId);
+    if( !xonIsOn && queued > 100 ) {
+        xQueueSendToFrontFromISR(UART_TxQueueId, &xoffChar, &hasHigherPriorityWoken);
+        xonIsOn = true;
+        xonCounter++;
+        xonAt = rxCounter;
+    }
+    xQueueSendToBackFromISR(UART_RxQueueId, &UART_RxBuffer, &hasHigherPriorityWoken);
+    // Restart receiving
+    HAL_UART_Receive_IT(&huart2, &UART_RxBuffer, 1);
 }
 
 /**

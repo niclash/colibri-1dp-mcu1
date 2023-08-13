@@ -1,0 +1,19 @@
+# flib/mecrisp/disassembler-m3.fs
+flib/mecrisp/cond.fs
+flib/mecrisp/hexdump.fs
+# flib/mecrisp/multi.fs
+flib/stm32wle5/io.fs
+flib/pkg/rak3172.fs
+# flib/stm32wle5/hal.fs
+flib/stm32wle5/i2c.fs
+flib/stm32wle5/spi.fs
+# flib/stm32wle5/timer.fs
+# flib/stm32wle5/uart2.fs
+# flib/stm32wle5/uart2-irq.fs
+flib/any/buffers.fs
+flib/any/crc.fs
+# flib/any/pid.fs
+flib/any/ring.fs
+# flib/any/testing.fs
+# flib/any/timed.fs
+flib/i2c/sm7391.fs
