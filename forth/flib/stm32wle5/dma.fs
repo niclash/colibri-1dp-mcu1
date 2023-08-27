@@ -53,47 +53,47 @@ $40020400 constant DMA2
 ;
 
 : dma-from-memory ( conf -- conf )
-  16 or
+  $10 or
 ;
 
 : dma-circular ( conf -- conf )
-  32 or
+  $20 or
 ;
 
 : dma-peri-inc ( conf -- conf )
-  64 or
+  $40 or
 ;
 
 : dma-peri-16 ( conf -- conf )
-  256 or
+  $100 or
 ;
 
 : dma-peri-32 ( conf -- conf )
-  512 or
+  $200 or
 ;
 
 : dma-mem-inc ( conf -- conf )
-  128 or
+  $80 or
 ;
 
 : dma-mem-16 ( conf -- conf )
-  1024 or
+  $400 or
 ;
 
 : dma-mem-32 ( conf -- conf )
-  2048 or
+  $800 or
 ;
 
 : dma-pri-med ( conf -- conf )
-  4096 or
+  $1000 or
 ;
 
 : dma-pri-high ( conf -- conf )
-  8192 or
+  $2000 or
 ;
 
 : dma-mem-mem ( conf -- conf )
-  16384 or
+  $4000 or
 ;
 
 : dma-config ( conf dma channel -- )
@@ -101,7 +101,7 @@ $40020400 constant DMA2
 ;
 
 : dma-start ( dma channel -- )
-  CCR 0 bit !                            \ set CCR, start transfer
+  CCR 0 bit swap !                            \ set CCR, start transfer
 ;
 
 : dma-channel.  ( dma channel -- )

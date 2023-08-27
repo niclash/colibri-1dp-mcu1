@@ -99,21 +99,10 @@ $40013000 constant SPI1
   2drop -spi
   ;
 
-: spi-dma-config ( -- )
-  6 SPI1-CR1 bis!                   \ enable SPI1
-  SPI1 DMA1 dma1-spi-channel CPAR ! \ set peripheral address
-  dma-init
-    dma-from-memory
-    dma-peri-16
-    dma-mem-16
-    dma-mem-inc
-  DMA1 dma1-spi-channel dma-config
-;
-
 : >spi-dma ( addr len -- )
   DMA1 dma1-spi-channel CNDTR !     \ set length
   DMA1 dma1-spi-channel CMAR !      \ set memory address
-  DMA1 dma1-spi-channel dma-start
+\  DMA1 dma1-spi-channel dma-start
 ;
 
 \ ===== initialization
