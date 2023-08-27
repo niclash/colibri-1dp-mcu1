@@ -25,12 +25,14 @@ $40013800 constant USART1
 $58000000 constant RCC
      RCC $00 + constant RCC-CR
      RCC $04 + constant RCC-ICSCR
-     RCC $0C + constant RCC-CFGR
+     RCC $08 + constant RCC-CFGR
      RCC $28 + constant RCC-APB1RSTR
-     RCC $30 + constant RCC-AHBENR
-     RCC $34 + constant RCC-APB2ENR
-     RCC $38 + constant RCC-APB1ENR
-     RCC $4C + constant RCC-CCIPR
+     RCC $48 + constant RCC-AHB1ENR
+     RCC $4C + constant RCC-AHB2ENR
+     RCC $50 + constant RCC-AHB3ENR
+     RCC $58 + constant RCC-APB1ENR
+     RCC $60 + constant RCC-APB2ENR
+     RCC $88 + constant RCC-CCIPR
 
 $58004000 constant FLASH
    FLASH $00 + constant FLASH-ACR
@@ -95,11 +97,12 @@ $58004000 constant FLASH
 
 0 variable ticks
 
-: ++ticks ( -- ) 1 ticks +! ;  \ for use as systick irq handler
+\ : ++ticks ( -- ) 1 ticks +! ;  \ for use as systick irq handler
 
-: systick-hz ( u -- )  \ enable systick interrupt at given frequency
-  ['] ++ticks irq-systick !
-  clock-hz @ swap /  1- $E000E014 !  7 $E000E010 ! ;
+\ : systick-hz ( u -- )  \ enable systick interrupt at given frequency
+\   ['] ++ticks irq-systick !
+\   clock-hz @ swap /  1- $E000E014 !  7 $E000E010 ! ;
+
 : systick-hz? ( -- u ) \ derive current systick frequency from clock
   clock-hz @  $E000E014 @ 1+  / ;
 

@@ -39,6 +39,8 @@
   bx lr
   .word ddrop_vektor
 
+.global hook_h_flashkomma
+
 @------------------------------------------------------------------------------
   Wortbirne Flag_visible|Flag_variable, "hook-flushflash" @ ( -- addr )
   CoreVariable hook_flushflash

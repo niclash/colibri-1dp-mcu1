@@ -151,7 +151,6 @@ void vcom_Trace(uint8_t *p_data, uint16_t size)
 UTIL_ADV_TRACE_Status_t vcom_Trace_DMA(uint8_t *p_data, uint16_t size)
 {
   /* USER CODE BEGIN vcom_Trace_DMA_1 */
-
   /* USER CODE END vcom_Trace_DMA_1 */
   HAL_UART_Transmit_DMA(&huart1, p_data, size);
   return UTIL_ADV_TRACE_OK;

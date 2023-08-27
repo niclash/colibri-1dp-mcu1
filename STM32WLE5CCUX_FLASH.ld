@@ -46,8 +46,8 @@ MEMORY
 {
   RAM    (xrw)      : ORIGIN = 0x20000000, LENGTH = 64K
   FLASH   (rx)      : ORIGIN = 0x08000000, LENGTH = 160K
-  FLASH_FORTH (rx)  : ORIGIN = 0x08028000, LENGTH = 92K
-  FLASH_NVM (rx)    : ORIGIN = 0x0803F000, LENGTH = 4K
+  FLASH_FORTH (rwx) : ORIGIN = 0x08028000, LENGTH = 92K
+  FLASH_NVM (rwx)   : ORIGIN = 0x0803F000, LENGTH = 4K
 }
 
 /* Sections */
@@ -130,13 +130,16 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
- .fill :
+/*
+.fill :
   {
+    ForthFlashStart = .;
     FILL(0xFFFFFFFF);
     . = ORIGIN(FLASH_FORTH) + LENGTH(FLASH_FORTH) - 1;
     BYTE(0xFF)
-    ___ROM_AT = .;
+    ForthFlashEnd = .;
   } >FLASH_FORTH
+*/
 
   /* Used by the startup to initialize data */
   _sidata = LOADADDR(.data);

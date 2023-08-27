@@ -67,6 +67,7 @@
 
 //.equ	DEFAULT_TERMINAL, CDC_TERMINAL
 .equ	DEFAULT_TERMINAL, UART_TERMINAL
+.equ    color,              1
 
 .equ	TERMINAL_AUTO,		1
 
@@ -107,8 +108,8 @@ MEMORY
 
 @ Konstanten für die Größe und Aufteilung des Flash-Speichers
 
-.equ	Kernschutzadresse,		0x08030000	@ Mecrisp core never writes flash below this address.
-.equ	FlashDictionaryAnfang,	0x08038000	@ 160 KiB Flash reserved for core and C.
+.equ	Kernschutzadresse,		0x08028000	@ Mecrisp core never writes flash below this address.
+.equ	FlashDictionaryAnfang,	0x08028000	@ 160 KiB Flash reserved for core and C.
 .equ	FlashDictionaryEnde,	0x0803F000	@ 92 KiB Flash available for Mecrisp dictionary
 .equ	Backlinkgrenze,			RamAnfang	@ Ab dem Ram-Start.
 

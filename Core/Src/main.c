@@ -52,12 +52,26 @@ I2C_HandleTypeDef hi2c2;
 
 RTC_HandleTypeDef hrtc;
 
+SPI_HandleTypeDef hspi1;
+
 SUBGHZ_HandleTypeDef hsubghz;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart1_tx;
 
+/* Definitions for lorawan */
+osThreadId_t lorawanHandle;
+uint32_t lorawanBuffer[ 512 ];
+osStaticThreadDef_t lorawanControlBlock;
+const osThreadAttr_t lorawan_attributes = {
+  .name = "lorawan",
+  .stack_mem = &lorawanBuffer[0],
+  .stack_size = sizeof(lorawanBuffer),
+  .cb_mem = &lorawanControlBlock,
+  .cb_size = sizeof(lorawanControlBlock),
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for forth */
 osThreadId_t forthHandle;
 uint32_t forthBuffer[ 512 ];
@@ -68,7 +82,7 @@ const osThreadAttr_t forth_attributes = {
   .stack_size = sizeof(forthBuffer),
   .cb_mem = &forthControlBlock,
   .cb_size = sizeof(forthControlBlock),
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityAboveNormal,
 };
 /* USER CODE BEGIN PV */
 RTC_HandleTypeDef hrtc;
@@ -82,6 +96,8 @@ bool testing3 = false;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_SPI1_Init(void);
+void RunLoraWan(void *argument);
 void RunForth(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -125,7 +141,11 @@ int main(void)
   MX_DMA_Init();
   MX_I2C2_Init();
   MX_USART2_UART_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+  RTC_init();
+  FLASH_init();
+  UART_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -148,6 +168,9 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
+  /* creation of lorawan */
+  lorawanHandle = osThreadNew(RunLoraWan, NULL, &lorawan_attributes);
+
   /* creation of forth */
   forthHandle = osThreadNew(RunForth, NULL, &forth_attributes);
 
@@ -386,6 +409,46 @@ void MX_RTC_Init(void)
 }
 
 /**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
   * @brief SUBGHZ Initialization Function
   * @param None
   * @retval None
@@ -545,16 +608,13 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOB, Slot_Select_1_Pin|Slot_Select_2_Pin|Slot_Select_3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(AUX3_GPIO_Port, AUX3_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, SPI_CS_A0_Pin|SPI_CS_A1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, SPI_CS_A0_Pin|SPI_CS_A1_Pin|AUX3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, AUX1_Pin|AUX2_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : Slot_Select_1_Pin Slot_Select_2_Pin AUX3_Pin Slot_Select_3_Pin */
-  GPIO_InitStruct.Pin = Slot_Select_1_Pin|Slot_Select_2_Pin|AUX3_Pin|Slot_Select_3_Pin;
+  /*Configure GPIO pins : Slot_Select_1_Pin Slot_Select_2_Pin Slot_Select_3_Pin */
+  GPIO_InitStruct.Pin = Slot_Select_1_Pin|Slot_Select_2_Pin|Slot_Select_3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -566,23 +626,18 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SPI_CS_A0_Pin SPI_CS_A1_Pin AUX1_Pin AUX2_Pin */
-  GPIO_InitStruct.Pin = SPI_CS_A0_Pin|SPI_CS_A1_Pin|AUX1_Pin|AUX2_Pin|GPIO_PIN_15;
+  /*Configure GPIO pins : SPI_CS_A0_Pin SPI_CS_A1_Pin AUX1_Pin AUX2_Pin
+                           AUX3_Pin */
+  GPIO_InitStruct.Pin = SPI_CS_A0_Pin|SPI_CS_A1_Pin|AUX1_Pin|AUX2_Pin
+                          |AUX3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA4 PA5 PA7 PA10
-                           PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_7|GPIO_PIN_10;
+  /*Configure GPIO pins : PA7 PA15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_7|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PA6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -606,6 +661,25 @@ void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
+/* USER CODE BEGIN Header_RunLoraWan */
+/**
+* @brief Function implementing the lora thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_RunLoraWan */
+void RunLoraWan(void *argument)
+{
+  /* init code for LoRaWAN */
+  MX_LoRaWAN_Init();
+  /* USER CODE BEGIN 5 */
+    for(;;)
+    {
+        osDelay(1);
+    }
+  /* USER CODE END 5 */
+}
+
 /* USER CODE BEGIN Header_RunForth */
 /**
 * @brief Function implementing the forth thread.
@@ -615,18 +689,12 @@ void MX_GPIO_Init(void)
 /* USER CODE END Header_RunForth */
 void RunForth(void *argument)
 {
-  /* init code for LoRaWAN */
-  MX_LoRaWAN_Init();
-  /* USER CODE BEGIN 5 */
-
-  RTC_init();
-  FLASH_init();
-  UART_init();
-
-  while(true) {
-    Forth();        // Forth contains an endless loop, but IF it happens to exit, we jump straight back into it.
-  }
-  /* USER CODE END 5 */
+  /* USER CODE BEGIN RunForth */
+  /* Infinite loop */
+    while(true) {
+        Forth();        // Forth contains an endless loop, but IF it happens to exit, we jump straight back into it.
+    }
+  /* USER CODE END RunForth */
 }
 
 /**
@@ -676,8 +744,6 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

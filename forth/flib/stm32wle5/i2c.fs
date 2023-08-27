@@ -44,7 +44,8 @@ $40005800 constant I2C2
 \   $00300619 I2C2-TIMINGR !
 \ ;
 
-100 buffer: i2c.buf
+$20 constant i2c-buffer-size    \ must be a factor in $100
+i2c-buffer-size buffer: i2c.buf
  0 variable i2c.ptr
 
 : i2c-reset ( -- )  i2c.buf i2c.ptr ! ;
@@ -103,7 +104,7 @@ $40005800 constant I2C2
   ?dup if
     i2c-setn  1 i2c-start  i2c-rd   \ rx>0
   then
-  i2c-stop i2c-reset
+  i2c-stop pause i2c-reset
   4 bit I2C2-ISR bit@ 0<>           \ NAKF
 ;
 

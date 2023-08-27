@@ -720,7 +720,7 @@ rtos_osKernelGetSysTimerFreq:
 //  ==== Generic Wait Functions ====
 
 // -----------------------------------------------------------------------------
-		Wortbirne Flag_visible, "osDelay"
+		Wortbirne Flag_visible, "delay"
 		@ ( u -- n ) Wait for Timeout (Time Delay).
 /// \param[in]     ticks         \ref CMSIS_RTOS_TimeOutValue "time ticks" value
 /// \return status code that indicates the execution status of the function.
@@ -734,7 +734,7 @@ rtos_osDelay:
 	pop		{pc}
 
 // -----------------------------------------------------------------------------
-		Wortbirne Flag_visible, "osDelayUntil"
+		Wortbirne Flag_visible, "delayUntil"
 		@ ( u -- n ) Wait until specified time.
 /// \param[in]     ticks         absolute time in ticks
 /// \return status code that indicates the execution status of the function.

@@ -17,15 +17,17 @@ $40013000 constant SPI1
 \    SPI1 $14 + constant SPI1-RXCRCR
 \    SPI1 $18 + constant SPI1-TXCRCR
 
-: spi? ( -- )
+: spi. ( -- )
   SPI1
-  cr ."     CR1 " dup @ hex. 4 +
-     ."     CR2 " dup @ hex. 4 +
-     ."      SR " dup @ hex. 4 +
-     ."      DR " dup @ hex. 4 +
-  cr ."   CRCPR " dup @ hex. 4 +
-     ."  RXCRCR " dup @ hex. 4 +
-     ."  TXCRCR " dup @ hex. drop ;
+  cr ."    CR1 " dup @ hex. 4 +
+  cr ."    CR2 " dup @ hex. 4 +
+  cr ."     SR " dup @ hex. 4 +
+  cr ."     DR " dup @ hex. 4 +
+  cr ."  CRCPR " dup @ hex. 4 +
+  cr ." RXCRCR " dup @ hex. 4 +
+  cr ." TXCRCR " dup @ hex.
+  drop
+;
 
 \ : +spi ( -- ) ssel @ ioc! ;  \ select SPI
 \ : -spi ( -- ) ssel @ ios! ;  \ deselect SPI
@@ -97,6 +99,23 @@ $40013000 constant SPI1
   2drop -spi
   ;
 
+: spi-dma-config ( -- )
+  6 SPI1-CR1 bis!                   \ enable SPI1
+  SPI1 DMA1 dma1-spi-channel CPAR ! \ set peripheral address
+  dma-init
+    dma-from-memory
+    dma-peri-16
+    dma-mem-16
+    dma-mem-inc
+  DMA1 dma1-spi-channel dma-config
+;
+
+: >spi-dma ( addr len -- )
+  DMA1 dma1-spi-channel CNDTR !     \ set length
+  DMA1 dma1-spi-channel CMAR !      \ set memory address
+  DMA1 dma1-spi-channel dma-start
+;
+
 \ ===== initialization
 
 : fix-ssel ( -- ) \ internal to calculate ssel.bit & ssel.addr
@@ -105,21 +124,24 @@ $40013000 constant SPI1
   dup io-base GPIO.BSRR + ssel.addr !
   io# ssel.bit !
   -spi
-  ;
+;
 
 : spi!ssel ( ssel -- ) \ set chip-select pin, e.g. "PA4 spi!ssel"
   ssel ! fix-ssel
-  ;
+;
 
-\ Hardware initialization is in CubeMX
-\ : spi-init ( -- )  \ set up hardware SPI
-\   fix-ssel
-\   OMODE-AF-PP SCLK   io-mode!
-\   OMODE-AF-PP MISO   io-mode!
-\   OMODE-AF-PP MOSI   io-mode!
-\
-\   12 bit RCC-APB2ENR bis!  \ set SPI1EN
-\   %0000001101000100 SPI1-CR1 !  \ clk/2, i.e. 8 MHz, master
-\   SPI1-SR @ drop  \ appears to be needed to avoid hang in some cases
-\   2 bit SPI1-CR2 bis!  \ SS output enable
-\ ;
+: spi-init ( -- )  \ set up hardware SPI
+  #12 bit RCC-APB2ENR bis!  \ set SPI1EN (SPI1 enable)
+
+  fix-ssel
+  OMODE-AF-PP SCLK   io-mode!
+  OMODE-AF-PP MISO   io-mode!
+  OMODE-AF-PP MOSI   io-mode!
+
+  %0000001101010100 SPI1-CR1 !  \ clk/4, i.e. 8 MHz, master
+  %0000111100001100 SPI1-CR2 !  \ 16 bit mode
+  SPI1-SR @ drop  \ appears to be needed to avoid hang in some cases
+  2 bit SPI1-CR2 bis!  \ SS output enable
+;
+
+

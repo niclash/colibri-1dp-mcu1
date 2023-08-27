@@ -535,7 +535,7 @@ static void OnTxData(LmHandlerTxParams_t *params)
 static void OnJoinRequest(LmHandlerJoinParams_t *joinParams)
 {
   /* USER CODE BEGIN OnJoinRequest_1 */
-    HAL_GPIO_WritePin(AUX3_GPIO_Port, AUX3_Pin, GPIO_PIN_RESET);
+//    HAL_GPIO_WritePin(LED_STATUS_GPIO_Port, LED_STATUS_Pin, GPIO_PIN_RESET);
   /* USER CODE END OnJoinRequest_1 */
 }
 

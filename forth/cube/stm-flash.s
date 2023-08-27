@@ -45,23 +45,7 @@ eightflashstore: @ ( x1 x2 addr -- ) x1 contains LSB of those 64 bits.
 
 @ -----------------------------------------------------------------------------
 	Wortbirne Flag_visible, "flashpageerase" @ ( Addr -- )
-	@ Deletes one 4 KiB Flash page (sector!)
-	// there are only 12 sectors for 1024 KiB
-	// 16 KiB sectors
-	// 0x08000000  0x08003FFF  0
-	// 0x08004000  0x08007FFF  1
-	// 0x08008000  0x0800BFFF  2
-	// 0x0800C000  0x0800FFFF  3
-    // 64 KiB sector
-	// 0x08010000  0x0801FFFF  4
-    // 128 KiB sectors
-	// 0x08020000  0x0803FFFF  5
-	// 0x08040000  0x0805FFFF  6  here starts the flash dictionary
-	// 0x08060000  0x0807FFFF  7
-	// 0x08080000  0x0809FFFF  8
-	// 0x080A0000  0x080BFFFF  9
-	// 0x080C0000  0x080DFFFF  10
-	// 0x080E0000  0x080FFFFF  11
+	@ Deletes one 2 KiB Flash page (sector!)
 flashpageerase:
 @ -----------------------------------------------------------------------------
 	push	{r0-r3, lr}
@@ -81,20 +65,23 @@ flashpageerase:
 @ -----------------------------------------------------------------------------
 	ldr		r0, =FlashDictionaryAnfang
 eraseflash_intern:
-//	cpsid	i
 	ldr		r1, =FlashDictionaryEnde
 	ldr		r2, =0xFFFF
 
-1:	ldrh	r3, [r0]
-	cmp		r3, r2
-	beq		2f
+1:
+@ The commented-out section below tries to limit the erasure to area which is
+@ not containing 0xFF, but with RAK3172 we want to always ensure the entire
+@ thing is erased.
+@	ldrh	r3, [r0]
+@	cmp		r3, r2
+@	beq		2f
 	pushda	r0
 	dup
 	write	"Erase block at  "
 	bl	hexdot
 	writeln " from Flash"
 	bl		flashpageerase
-2:	adds	r0, r0, #2
+2:	adds	r0, r0, #2048
 	cmp		r0, r1
 	bne		1b
 	writeln	"Finished. Reset !"

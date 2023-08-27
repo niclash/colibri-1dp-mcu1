@@ -74,8 +74,6 @@ void MX_RTC_Init(void);
 #define Slot_Select_1_GPIO_Port GPIOB
 #define Slot_Select_2_Pin GPIO_PIN_4
 #define Slot_Select_2_GPIO_Port GPIOB
-#define AUX3_Pin GPIO_PIN_5
-#define AUX3_GPIO_Port GPIOB
 #define SPI_CS_A0_Pin GPIO_PIN_0
 #define SPI_CS_A0_GPIO_Port GPIOA
 #define SPI_CS_A1_Pin GPIO_PIN_1
@@ -86,6 +84,8 @@ void MX_RTC_Init(void);
 #define AUX2_GPIO_Port GPIOA
 #define Slot_Select_3_Pin GPIO_PIN_2
 #define Slot_Select_3_GPIO_Port GPIOB
+#define AUX3_Pin GPIO_PIN_10
+#define AUX3_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
