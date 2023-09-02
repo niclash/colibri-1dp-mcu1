@@ -1,0 +1,29 @@
+compiletoflash
+.include standard/testing.fs
+.include standard/memory.fs
+
+.include flib/mecrisp/disassembler-m3.fs
+.include flib/mecrisp/cond.fs
+.include flib/mecrisp/hexdump.fs
+.include flib/any/buffers.fs
+\ .include  flib/mecrisp/multi.fs
+
+.include flib/stm32wle5/io.fs
+.include flib/pkg/rak3172.fs
+.include flib/stm32wle5/hal.fs
+.include flib/stm32wle5/i2c.fs
+\ .include flib/stm32wle5/dma.fs
+.include flib/stm32wle5/spi.fs
+.include colibri/colibri.fs
+.include colibri/colors.fs
+.include flib/i2c/tca9548.fs
+.include colibri/ws2812b.fs
+.include colibri/slot-ctrl.fs
+
+.include flib/i2c/m24c64.fs
+.include flib/i2c/24lc16.fs
+\ .include colibri/eeprom.fs
+\      .include flib/i2c/sm7391.fs
+\      .include flib/i2c/tca6424.fs
+
+compiletoram

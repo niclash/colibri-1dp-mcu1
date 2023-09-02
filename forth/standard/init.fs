@@ -1,0 +1,5 @@
+
+
+: init-peripherals
+  spi-init
+;

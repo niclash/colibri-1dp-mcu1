@@ -99,12 +99,6 @@ $40013000 constant SPI1
   2drop -spi
   ;
 
-: >spi-dma ( addr len -- )
-  DMA1 dma1-spi-channel CNDTR !     \ set length
-  DMA1 dma1-spi-channel CMAR !      \ set memory address
-\  DMA1 dma1-spi-channel dma-start
-;
-
 \ ===== initialization
 
 : fix-ssel ( -- ) \ internal to calculate ssel.bit & ssel.addr

@@ -1040,7 +1040,7 @@ rtos_xPortGetFreeHeapSize:
 
 // -----------------------------------------------------------------------------
 		Wortbirne Flag_visible, "pvPortMalloc"
-		@ ( u -- addr ) allocate dynamic memory (thread save)
+		@ ( u -- addr ) allocate dynamic memory (thread-safe)
 		@			void* pvPortMalloc (size_t xWantedSize)
 // -----------------------------------------------------------------------------
 .global		rtos_pvPortMalloc

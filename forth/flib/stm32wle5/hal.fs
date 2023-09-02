@@ -26,7 +26,8 @@ $58000000 constant RCC
      RCC $00 + constant RCC-CR
      RCC $04 + constant RCC-ICSCR
      RCC $08 + constant RCC-CFGR
-     RCC $28 + constant RCC-APB1RSTR
+     RCC $28 + constant RCC-AHB1RSTR
+     RCC $38 + constant RCC-APB1RSTR
      RCC $48 + constant RCC-AHB1ENR
      RCC $4C + constant RCC-AHB2ENR
      RCC $50 + constant RCC-AHB3ENR

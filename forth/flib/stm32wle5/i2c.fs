@@ -44,7 +44,7 @@ $40005800 constant I2C2
 \   $00300619 I2C2-TIMINGR !
 \ ;
 
-$20 constant i2c-buffer-size    \ must be a factor in $100
+$28 constant i2c-buffer-size        \ 32 bytes for fit with 256 memory swap-around, plus up to 8 bytes of other things.
 i2c-buffer-size buffer: i2c.buf
  0 variable i2c.ptr
 
@@ -76,7 +76,7 @@ i2c-buffer-size buffer: i2c.buf
   begin
     begin %1011001 I2C2-ISR bit@ until  \ wait for TCR, STOPF, NACKF, or TXE
   %1011000 I2C2-ISR bit@ not while  \ while !TCR, !STOPF, and !NACKF
-    i2c> I2C2-TXDR c!
+    i2c> dup emit I2C2-TXDR c!
   repeat
 ;
 
@@ -84,7 +84,7 @@ i2c-buffer-size buffer: i2c.buf
   begin
     begin %1011100 I2C2-ISR bit@ until  \ wait for TCR, STOPF, NACKF, or RXNE
   2 bit I2C2-ISR bit@ while  \ while RXNE
-    I2C2-RXDR c@ >i2c
+    I2C2-RXDR c@ dup emit >i2c
   repeat ;
 
 \ there are 4 cases:
@@ -94,6 +94,7 @@ i2c-buffer-size buffer: i2c.buf
 \   tx=0 rx=0 : START - STOP          (used for presence detection)
 
 : i2c-xfer ( u -- nak )             \ u=number of bytes to read
+  dup . cr
   0 bit I2C2-CR1 bic!  0 bit I2C2-CR1 bis!  \ toggle PE low to reset
   i2c.ptr @ i2c.buf -               \ number of bytes in buffer -> TOS
   ?dup if
@@ -123,4 +124,5 @@ i2c-buffer-size buffer: i2c.buf
         then
       then
     loop
-  $10 +loop ;
+  $10 +loop
+;

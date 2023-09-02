@@ -6,7 +6,7 @@
 \ The initial content of the allocated space is undefined.
 \ If the allocation succeeds, a-addr is the aligned starting address of the allocated space and ior is zero.
 \ If the operation fails, a-addr does not represent a valid address and ior is the implementation-defined I/O result code.
-: allocate ( u -- a-addr ior ) pvPortMalloc swap drop dup ;
+: allocate ( u -- a-addr ior ) pvPortMalloc dup 0= if 1 else 0 then ;
 
 \ FREE
 \ Return the contiguous region of data space indicated by a-addr to the system for later allocation.

@@ -38,8 +38,39 @@ $40020400 constant DMA2
   1- $4 * 3 + swap ISR bit@
 ;
 
+: dma-channel.  ( dma channel -- )
+  cr ."   CCR" dup . 2dup CCR dup hex. @ hex.
+  cr ." CNDTR" dup . 2dup CNDTR dup hex. @ hex.
+  cr ."  CPAR" dup . 2dup CPAR dup hex. @ hex.
+  cr ."  CMAR" dup . 2dup CMAR dup hex. @ hex.
+  2drop
+;
+
+: dma1.  ( -- )
+  cr ." DMA1 " DMA1 hex.
+  cr ." -------------------- "
+  cr ."    ISR " DMA1 ISR dup hex. @ hex.
+  cr ."   IFCR " DMA1 IFCR dup hex. @ hex.
+  8 1 do
+    DMA1 i dma-channel.
+  loop
+;
+
+: dma2.
+  cr cr ." DMA2 " DMA2 hex.
+  cr ." -------------------- "
+  cr ."    ISR " DMA2 ISR dup hex. @ hex.
+  cr ."   IFCR " DMA2 IFCR dup hex. @ hex.
+  8 1 do
+    DMA2 i dma-channel.
+  loop
+;
+
 : dma-init ( -- conf )
-  0
+  3 RCC-AHB1ENR bis!    \ enable DMA1 and DMA2 clocks
+  3 RCC-AHB1RSTR bis!   \ reset DMA1 and DMA2
+  nop
+  3 RCC-AHB1RSTR bic!   \ release reset signal on DMA1 and DMA2
 ;
 
 : dma-tc-int ( conf -- conf )
@@ -101,35 +132,6 @@ $40020400 constant DMA2
 ;
 
 : dma-start ( dma channel -- )
-  CCR 0 bit swap !                            \ set CCR, start transfer
+  CCR 0 bit swap bis!               \ set CCR, start transfer
 ;
 
-: dma-channel.  ( dma channel -- )
-  cr ."   CCR" dup . 2dup CCR @ hex.
-  cr ." CNDTR" dup . 2dup CNDTR @ hex.
-  cr ."  CPAR" dup . 2dup CPAR @ hex.
-  cr ."  CMAR" dup . 2dup CMAR @ hex.
-  2drop
-;
-
-: dma.  ( -- )
-  cr ." DMA1 "
-  cr ." -------------------- "
-  cr ."    ISR " DMA1 ISR @ hex.
-  cr ."   IFCR " DMA1 IFCR @ hex.
-  8 1 do
-    DMA1 i dma-channel.
-  loop
-\  cr cr ." DMA2 "
-\  cr ." -------------------- "
-\  cr ."    ISR " DMA1 ISR @ hex.
-\  cr ."   IFCR " DMA1 IFCR @ hex.
-\  8 1 do
-\    DMA2 i dma-channel.
-\  loop
-;
-
-\ DMA1 channels
-1 constant dma1-spi-channel
-
-\ DMA2 channels
