@@ -37,11 +37,13 @@
     ['] m24c64-write-frag write-frag !      \ set up pointer to writing a fragment
     ['] m24c64-read-frag read-frag !        \ set up pointer to reading a fragment
     #8192 eeprom-size !                     \ total size of eeprom
+    #32 max-read&write-size !
   else
     \ it is a 24LC16
     ['] 24lc16-write-frag write-frag !      \ set up pointer to writing a fragment
     ['] 24lc16-read-frag read-frag !        \ set up pointer to reading a fragment
     #2048 eeprom-size !                     \ total size of eeprom
+    #16 max-read&write-size !
   then
 ;
 
@@ -60,17 +62,9 @@
 : (clean-stack) drop drop drop ; \ verified
 
 : (write-frag) ( src-addr dest-addr len -- src-addr dest-addr len err? )
-    2 pick
-    ( src-addr dest-addr len src-addr )
-    2 pick
-    ( src-addr dest-addr len src-addr dest-addr )
-    2 pick
-    ( src-addr dest-addr len src-addr dest-addr len )
+    2 pick 2 pick 2 pick
     (read&write-len)        \ adjust to max bytes to write
-    ( src-addr dest-addr len src-addr dest-addr len )
     swap
-    ( src-addr dest-addr len src-addr len dest-addr )
-    .s
     write-frag @
     dup 0= if
       .red< ." EEPROM has not been opened. " >.
@@ -83,106 +77,58 @@
 
 : write-eeprom ( src-addr dest-addr len -- err )
   begin
+    5 delay drop
     (write-frag)
-    if
-      .red< ." Error writing to EEPROM. " >.
-      (clean-stack)                 \ Clean up stack
-      -1 exit                       \ exit write-eeprom with error
-    then
+    if .red< ." Error writing to EEPROM. " >. (clean-stack) -1 exit then
     (update-ptr&len)
-  dup 0= until                      \ should always end up on 0 at the end
-  (clean-stack) 0                   \ clean up stack and return no error
+  dup 0<= until             \ should always end up on 0 at the end
+  (clean-stack) 0           \ clean up stack and return no error
 ;
 
 : (read-frag) ( src-addr len -- src-addr len flag )
     2dup
-    ( src-addr len src-addr len )
     (read&write-len)
-    ( src-addr len src-addr len )
-    .s
     read-frag @
-    .s
     dup 0= if
       .red< ." EEPROM has not been opened. " >.
-      drop drop -1
+      drop                  \ drop XT addr
+      drop drop -1          \ drop read-frag arguments, push error
     else
       execute
     then
 ;
 
 : (copy-i2c-to-buffer) ( dest-addr src-addr len -- dest-addr src-addr len )
-    rot
-    ( src-addr len dest-addr )
-    dup
-    ( src-addr len dest-addr dest-addr )
-    i2c.buf
-    ( src-addr len dest-addr dest-addr i2cbuf-addr )
+    rot dup i2c-buf
     3 pick (read&write-len)
-    ( src-addr len dest-addr dest-addr i2cbuf-addr len )
     buffer-copy drop drop
-    ( src-addr len dest-addr )
     -rot
-    ( dest-addr src-addr len )
 ;
 
 : read-eeprom ( src-addr dest-addr len -- err )
   rot swap
-  ( dest-addr src-addr len )
   begin
-    ( dest-addr src-addr len )
     (read-frag)
-    ( dest-addr src-addr len err? )
-    if
-      .red< ." Error reading from EEPROM. " >.
-      (clean-stack)
-      -1 exit
-    then
-    ( dest-addr src-addr len )
+    if .red< ." Error reading from EEPROM. " >. (clean-stack) -1 exit then
     (copy-i2c-to-buffer)
-    ( dest-addr src-addr len )
     (update-ptr&len)
   dup 0<= until
   (clean-stack) 0
 ;
 
-: block-read ( block# -- addr flag ) \ reads 1024 bytes from EEPROM, allocates buffer for write, must call "free" later if no error
-  block-size allocate
-  if
-    .red< ." Out of memory. " >.
-    drop drop
-    0 -1 exit
-  then
-\  dup block-size $AA fill           \ fill RAM with $AA to see what is read vs what is left alone. TODO: Remove after debugging
-  ( block# dest-addr )
-  dup
-  ( block# dest-addr dest-addr )
-  rot
-  ( dest-addr dest-addr block# )
-  block-size *
-  ( dest-addr dest-addr src-addr )
-  swap
-  ( dest-addr src-addr dest-addr )
-  block-size
-  ( dest-addr src-addr dest-addr length)
+: block-read ( block# -- addr flag )            \ reads 1024 bytes from EEPROM, allocates buffer for write, must call "free" later if no error
+  block-size allocate if .red< ." Out of memory. " >. drop drop 0 -1 exit then
+  dup rot block-size * swap block-size
   read-eeprom
-  .s
-  ( dest-addr err )
-  if
-    .red< ." Unable to read EEPROM. " >.
-    free        \ free the allocated memory
-    drop
-    0 -1        \ return with error (and addr=0)
+  if .red< ." Unable to read EEPROM. " >. free  \ free the allocated memory
+    drop 0 -1                                   \ return with error (and addr=0)
   else
-    0           \ return with no error
+    0                                           \ return with no error
   then
 ;
 
 : block-write ( src-addr len block# -- err )
-  block-size *
-  ( src-addr len dest-addr )
-  swap
-  ( src-addr dest-addr len )
-  write-eeprom
+  block-size * swap write-eeprom
 ;
 
 : eeprom-cell@ ( addr -- n err ) \ reads the integer value in the EEPROM at the address and put on TOS
@@ -191,7 +137,7 @@
     .red< ." Out of range. " >.
     drop 0 -1 exit
   then
-  4 read-frag @ execute i2c.buf @ swap
+  4 read-frag @ execute i2c-buf @ swap
 ;
 
 : eeprom-cell! ( n addr -- err ) \ write the TOS integer value to the EEPROM at the address addr
@@ -201,9 +147,9 @@
   then
   swap
   ( addr value )
-  i2c.buf $10 + !
+  i2c-buf $10 + !
   ( addr )
-  i2c.buf $10 +
+  i2c-buf $10 +
   ( addr src )
   4
   ( addr src len )
@@ -214,19 +160,17 @@
 
 : block-terminated? ( block-buffer-ptr -- block-buffer-ptr flag ) \ checks if the last 3 characters are "\\\"
   dup 3 - c@ #92 =
-  ( block-buffer-ptr flag )
   over 2 - c@ #92 = and
-  ( block-buffer-ptr flag )
   over 1 - c@ #92 = and
 ;
 
 : crlf? ( bufptr ch  --  bufptr ch flag ) \ checks if a newline has been received
   over
   c@
-  #13 = if -1 exit then  \ if CR then we signal true and return
+  #13 = if -1 exit then     \ if CR then we signal true and return
   over
   c@ #10 = if               \ if LF
-    over 1- c@ #13 <>            \    check if we have signaled CR earlier, if so, then return false, else true
+    over 1- c@ #13 <>       \    check if we have signaled CR earlier, if so, then return false, else true
   else
     0
   then
@@ -237,59 +181,28 @@
 ;
 
 : block-program ( block# -- )  \ reads terminal input until "\\\" (three backslashes) and writes content to eeprom block.
-  send-ok cr        \ Ensure that "forth-sender" program keeps on track.
+  send-ok                   \ Ensure that "forth-sender" program keeps on track.
   #1024 allocate
-  if
-    .red< ." Out of memory." >. cr
-    drop drop -1
-    exit
-  then
-  ( block# buffer )
+  if .red< ." Out of memory." >. cr drop drop -1 exit then
   dup
-  ( block# buffer bufptr )
   #1024 0 do
-  ( block# buffer bufptr )
     dup
-  ( block# buffer bufptr bufptr )
-    key         \ read terminal input
-  ( block# buffer bufptr bufptr ch )
-    dup
-  ( block# buffer bufptr bufptr ch ch )
-    rot
-  ( block# buffer bufptr ch ch bufptr )
-    c!
-  ( block# buffer bufptr ch )
+    key                     \ read terminal input
+    dup rot c!
     crlf? if send-ok then
-  ( block# buffer bufptr ch )
     emit
-  ( block# buffer bufptr )
-    1 +
-  ( block# buffer bufptr )
-    block-terminated? if leave then     \ exit loop if found termination
+    1+ block-terminated? if leave then     \ exit loop if found termination
   loop
-  ( block# buffer bufptr )
-  over
-  ( block# buffer bufptr buffer )
-  -
-  ( block# buffer length)
+  over -
   dup #1024 = if
     .red< ." Terminal input is too large. " >.
     (clean-stack)
     exit
   then
-  ( block# buffer length )
-  over >r
-  ( block# buffer length )
-  rot
-  ( buffer len block# )
-\  block-write
-\  ( err? )
-\  if
-\    .red< ." EEPROM was not written. " cr >.
-\  then
-\  r>
-\  free
-\  if
-\    .red< ." Unable to free memory properly. " >.
-\  then
+  over
+  >r
+  rot block-write
+  if .red< ." EEPROM was not written. " cr >. then
+  r>
+  free if .red< ." Unable to free memory properly. " >. then
 ;

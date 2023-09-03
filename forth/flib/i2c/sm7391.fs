@@ -16,7 +16,7 @@ decimal
 ;
 
 : sm7391-rd ( reg -- ) \ reads signed int16 from register
-  2 sm7391-raw i2c.buf h@
+  2 sm7391-raw i2c-buf h@
   dup #32768 > if
     #65536 -
   then

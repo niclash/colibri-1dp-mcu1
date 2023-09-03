@@ -41,14 +41,14 @@ $40005400 constant I2C1
   $00300619 I2C1-TIMINGR !
 ;
 
-100 buffer: i2c.buf
- 0 variable i2c.ptr
+100 buffer: i2c-buf
+ 0 variable i2c-ptr
 
-: i2c-reset ( -- )  i2c.buf i2c.ptr ! ;
+: i2c-reset ( -- )  i2c-buf i2c-ptr ! ;
 
 : i2c-addr ( u -- )  shl I2C1-CR2 !  i2c-reset ;
 
-: i2c++ ( -- addr )  i2c.ptr @  dup 1+ i2c.ptr ! ;
+: i2c++ ( -- addr )  i2c-ptr @  dup 1+ i2c-ptr ! ;
 
 : >i2c ( u -- )  i2c++ c! ;
 : i2c> ( -- u )  i2c++ c@ ;
@@ -91,7 +91,7 @@ $40005400 constant I2C1
 
 : i2c-xfer ( u -- nak )
   0 bit I2C1-CR1 bic!  0 bit I2C1-CR1 bis!  \ toggle PE low to reset
-  i2c.ptr @ i2c.buf - ?dup if
+  i2c-ptr @ i2c-buf - ?dup if
     i2c-setn  0 i2c-start  i2c-wr  \ tx>0
   else
     dup 0= if 0 i2c-start then  \ tx=0 rx=0

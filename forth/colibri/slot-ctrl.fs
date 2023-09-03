@@ -2,7 +2,7 @@
 \ Variables used for accessing eeprom on expansion board.
 
 #0  variable eeprom-size
-#32 variable max-read&write-size
+#16 variable max-read&write-size
 
 
 \ This is for Rev D and later
@@ -27,7 +27,7 @@
 : slot-reset ( slot# -- )
   1 = if PA10 else PA9 then
   ioc!
-  5 pause
+  5 delay drop
   1 = if PA10 else PA9 then
   ios!
 ;

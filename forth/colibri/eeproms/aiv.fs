@@ -1,11 +1,9 @@
 
 1 slot-on 1 slot-reset
-
-1 slot-select
-
+5 delay drop
+1 slot-select drop
+5 delay drop
 open-eeprom
-
-.s
 
 \ Next line will write the remaining text to \\\ (three backslashes) to block 1 in EEPROM
 1 block-program
@@ -30,7 +28,7 @@ open-eeprom
 : tick ( millis -- flag )
   read-adc
   0= if
-    i2c.buf @
+    i2c-buf @
     channel if in1 else in2 then !
     channel toggle
     start-convert

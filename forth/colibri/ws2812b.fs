@@ -71,7 +71,7 @@
     .s
     neopixel        \ generate bitstream for blue
     .s
-    pause
+    1 delay drop
     >spi
     >spi
     >spi
