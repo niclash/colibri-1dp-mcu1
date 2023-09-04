@@ -18,6 +18,8 @@ $40005800 constant I2C2
      I2C2 $24 + constant I2C2-RXDR
      I2C2 $28 + constant I2C2-TXDR
 
+0 variable i2c-verbose
+
 : i2c. ( -- )
   I2C2
   cr 6 spaces ." CR1 " dup @ hex. 4 +
@@ -87,6 +89,30 @@ i2c-buffer-size buffer: i2c-buf
     I2C2-RXDR c@ >i2c
   repeat ;
 
+: i2c-length i2c-ptr @ i2c-buf - ;
+: i2c-print-buffer-length i2c-length dup h.2 bl emit ;          \ print length
+: i2c-current-device I2C2-CR2 @ $FF and shr  ;                  \ device address (only 7bit addresses).
+: i2c-print-current-device i2c-current-device h.2 bl emit ;     \ print current device
+: (print-direction) if ." i2c send: " else ." i2c recv: " then ;
+: i2c-dump ( direction -- )
+  i2c-verbose @
+  0<> if
+    i2c-length
+    0 > if
+      dup (print-direction)
+      i2c-print-current-device
+      i2c-print-buffer-length
+      #91 emit bl emit                  \ print starting [
+      0 do
+        i i2c-buf + @ h.2
+        bl emit
+      loop
+      #93 emit cr
+    then
+  then
+  drop
+;
+
 \ there are 4 cases:
 \   tx>0 rx>0 : START - tx - RESTART - rx - STOP
 \   tx>0 rx=0 : START - tx - STOP
@@ -94,17 +120,21 @@ i2c-buffer-size buffer: i2c-buf
 \   tx=0 rx=0 : START - STOP          (used for presence detection)
 
 : i2c-xfer ( u -- nak )             \ u=number of bytes to read
+  0 i2c-dump
   0 bit I2C2-CR1 bic!  0 bit I2C2-CR1 bis!  \ toggle PE low to reset
-  i2c-ptr @ i2c-buf -               \ number of bytes in buffer -> TOS
+  i2c-length               \ number of bytes in buffer -> TOS
   ?dup if
     i2c-setn  0 i2c-start  i2c-wr   \ tx>0
+    i2c-reset
   else
     dup 0= if 0 i2c-start then      \ tx=0 rx=0
   then
   ?dup if
     i2c-setn  1 i2c-start  i2c-rd   \ rx>0
   then
-  i2c-stop pause i2c-reset
+  i2c-stop pause
+  1 i2c-dump
+  i2c-reset
   4 bit I2C2-ISR bit@ 0<>           \ NAKF
 ;
 

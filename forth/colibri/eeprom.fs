@@ -17,10 +17,10 @@
 \ on each reset.
 
 \ The module's code MUST contain definitions of the following words;
-\   init  ( -- channels )               -  executed after Page 1 has been read and executed, and IF tick/read/write is signaling "error".
-\   tick  ( millis -- flag )            -  called cyclically every 100ms.
-\   read  ( channel -- value type )     -  read value from a channel, type is the LPP Cayenne type with -1 signaling "error".
-\   write ( channel addr type -- err )  -  write a value of LPP Cayenne type to a channel. addr is the address to the LPP packet.
+\   [init]  ( -- channels )               -  executed after Page 1 has been read and executed, and IF tick/read/write is signaling "error".
+\   [tick]  ( millis -- flag )            -  called cyclically every 100ms.
+\   [read]  ( channel -- value type )     -  read value from a channel, type is the LPP Cayenne type with -1 signaling "error".
+\   [write] ( channel addr type -- err )  -  write a value of LPP Cayenne type to a channel. addr is the address to the LPP packet.
 
 #1024 constant block-size
 
@@ -181,17 +181,18 @@
 ;
 
 : block-program ( block# -- )  \ reads terminal input until "\\\" (three backslashes) and writes content to eeprom block.
-  send-ok                   \ Ensure that "forth-sender" program keeps on track.
+  send-ok                               \ Ensure that "forth-sender" program keeps on track.
   #1024 allocate
   if .red< ." Out of memory." >. cr drop drop -1 exit then
+  dup block-size $20 fill               \ fill RAM area with SPACE, so that EVALUATE later will have no issues.
   dup
   #1024 0 do
     dup
-    key                     \ read terminal input
+    key                                 \ read terminal input
     dup rot c!
     crlf? if send-ok then
     emit
-    1+ block-terminated? if leave then     \ exit loop if found termination
+    1+ block-terminated? if leave then  \ exit loop if found termination
   loop
   over -
   dup #1024 = if

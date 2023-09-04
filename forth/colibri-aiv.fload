@@ -1,0 +1,2 @@
+.include colibri/eeproms/prepare-load-program.fs
+.include colibri/eeproms/aiv.fs

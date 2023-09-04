@@ -3,7 +3,7 @@
 
 #0  variable eeprom-size
 #16 variable max-read&write-size
-
+0 variable slots-error-counter
 
 \ This is for Rev D and later
 \ : reset-low ( slot# -- )
@@ -26,9 +26,8 @@
 
 : slot-reset ( slot# -- )
   1 = if PA10 else PA9 then
-  ioc!
+  dup ioc!
   5 delay drop
-  1 = if PA10 else PA9 then
   ios!
 ;
 

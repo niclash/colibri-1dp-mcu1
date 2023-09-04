@@ -19,7 +19,7 @@ init-peripherals
 \      .include flib/i2c/tca6424.fs
 \
 \      .include colibri/colibri.fs
-\      .include colibri/lpp.fs
-\      \ .include colibri/slots.fs
 \      \ .include colibri/io-thread.fs
 \
+\      .include flib/i2c/sm7391.fs
+\      .include flib/i2c/tca6424.fs
